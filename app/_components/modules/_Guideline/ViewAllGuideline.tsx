@@ -13,7 +13,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ENV } from "@/app/config";
+
 import getCookie from "@/app/util/GetCookie";
 
 
@@ -31,24 +31,26 @@ export default function ViewAllGuideline() {
   const router = useRouter();
 
   const [guidelines, setGuidelines] = useState<any[]>([]);
+
+  console.log("Guideline", guidelines)
   const [loading, setLoading] = useState(true);
 
-  // Search Filter
+
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Pagination
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(12);
   const [totalPage, setTotalPage] = useState(1);
 
-  // Collapse filter section
+
   const [showFilters, setShowFilters] = useState(false);
 
   // FETCH FUNCTION
   const fetchGuidelines = async () => {
     setLoading(true);
-
-    const url = `https://mcq-analysis.vercel.app/api/v1/guideline?page=${page}&limit=${limit}&searchTerm=${searchTerm}`;
+      const base_url = process.env.NEXT_PUBLIC_BASE_URL!;
+    const url = `${base_url}/guideline?page=${page}&limit=${limit}&searchTerm=${searchTerm}`;
 
     try {
       const res = await fetch(url, {
@@ -267,7 +269,7 @@ export default function ViewAllGuideline() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/dashboard/guideline/view-guideline/${item.guideline_number}`);
+                      router.push(`/guideline/details/${item.guideline_number}`);
                     }}
                     className="flex items-center gap-2 bg-teal-100 text-teal-700 px-4 py-2 rounded-lg hover:bg-teal-200 transition-all font-semibold text-sm"
                   >

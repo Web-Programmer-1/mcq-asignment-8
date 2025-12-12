@@ -4,6 +4,7 @@
 "use client";
 
 import { ENV } from '@/app/config';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 interface FormData {
@@ -30,6 +31,7 @@ export default function Register() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -83,10 +85,12 @@ export default function Register() {
     try {
       const payload = {
         ...formData,
-        role: 'customer' // Hardcoded role
+        role: 'customer' 
       };
+
+      const base_url = process.env.NEXT_PUBLIC_BASE_URL!;
       
-      const response = await fetch(`https://mcq-analysis.vercel.app/api/v1/user`, {
+      const response = await fetch(`${base_url}/user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +100,7 @@ export default function Register() {
       
       const data = await response.json();
 
-      console.log("Register File Data", data)
+      // console.log("Register File Data", data)
       
       if (!response.ok) {
         if (data.errors) {
@@ -108,6 +112,7 @@ export default function Register() {
         setSuccess(true);
         setFormData({ name: '', phone_number: '', password: '' });
         setTimeout(() => setSuccess(false), 5000);
+        router.push('/login');
       }
     } catch (error) {
       setErrors({ general: 'Network error. Please try again.' });

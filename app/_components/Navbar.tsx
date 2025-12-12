@@ -1,5 +1,6 @@
 
 
+
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
@@ -10,14 +11,26 @@ import {
   User,
   LogOut,
   FileSliders,
+  Home,
+  BookOpen,
+  PlayCircle,
+  HelpCircle,
+  UserCircle,
+  Video,
+  BookAIcon,
 } from "lucide-react";
 import Swal from "sweetalert2";
+import { FcAbout } from "react-icons/fc";
+import { PiAddressBookTabs, PiExamBold } from "react-icons/pi";
+import { RiGuideLine } from "react-icons/ri";
+import { MdCloudQueue } from "react-icons/md";
 
 interface UserData {
   id: string;
   name: string;
   email?: string;
   phone_number: string;
+  image?: string;
 }
 
 function getCookie(name: string): string | null {
@@ -34,20 +47,24 @@ const Backend_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL!;
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Our Book's", href: "/#how-it-works" },
-    { name: "How It Works", href: "/#why-us" },
-    { name: "Why Us", href: "/#why-us" },
-    { name: "About", href: "/about" },
+    { name: "Home", href: "/", icon: Home },
+    { name: "About", href: "/about", icon: PiAddressBookTabs },
+    { name: "Book", href: "/book", icon: BookAIcon },
+    { name: "Exam", href: "/exam", icon: PiExamBold },
+    { name: "Guideline", href: "/guideline", icon: RiGuideLine },
+    { name: "Video", href: "/video", icon: Video },
+   
+
   ];
 
-  // ⭐⭐⭐ SWEETALERT LOGOUT HANDLER ⭐⭐⭐
+
+  
+
   const handleLogout = async () => {
     const result = await Swal.fire({
       title: "Logout?",
@@ -57,6 +74,7 @@ export default function Navbar() {
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Logout",
+      cancelButtonText: "Cancel",
     });
 
     if (!result.isConfirmed) return;
@@ -136,21 +154,21 @@ export default function Navbar() {
     fetchUserProfile();
   }, []);
 
-  // Click outside to close profile dropdown
+  // Close mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        mobileMenuOpen
       ) {
-        setProfileDropdownOpen(false);
+        setMobileMenuOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
 
   // User initials
   const getUserInitials = (name: string) =>
@@ -162,109 +180,101 @@ export default function Navbar() {
       .slice(0, 2);
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md shadow-sm fixed w-full top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-white/90 backdrop-blur-md shadow-sm fixed w-full top-0 z-50 border-b">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-36">
         <div className="flex justify-between items-center h-16">
           {/* LOGO */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="bg-green-800 p-2 rounded-lg">
+          <Link 
+            href="/" 
+            className="flex items-center space-x-2 group"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="bg-green-700 p-2 rounded-lg group-hover:bg-green-800 transition-all">
               <BarChart3 className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-green-800">
-              MCQ Analysis BD
-            </span>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-green-800">
+                MCQ Analysis BD
+              </span>
+              <span className="text-xs text-gray-500 hidden sm:block">
+                Smart Learning Platform
+              </span>
+            </div>
           </Link>
 
           {/* DESKTOP MENU */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link, index) => (
-              <Link
-                key={index}
-                href={link.href}
-                className="text-gray-700 hover:text-green-800 transition"
-              >
-                {link.name}
-              </Link>
-            ))}
-
-            {/* AUTH SECTION */}
-            {loading ? (
-              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
-            ) : user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() =>
-                    setProfileDropdownOpen(!profileDropdownOpen)
-                  }
-                  className="flex items-center space-x-3 hover:opacity-80 transition"
+          <div className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link, index) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={index}
+                  href={link.href}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg transition-all duration-200"
                 >
-                  <div className="w-10 h-10 rounded-full bg-green-800 flex items-center justify-center text-white font-semibold">
-                    {getUserInitials(user.name)}
-                  </div>
-                  <div className="text-left hidden lg:block">
+                  <Icon className="h-4 w-4" />
+                  <span className="font-medium">{link.name}</span>
+                </Link>
+              );
+            })}
+
+            {/* AUTH SECTION - DESKTOP */}
+            {loading ? (
+              <div className="ml-4 flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+                <div className="hidden lg:flex items-center space-x-2">
+                  <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ) : user ? (
+              <div className="ml-4 flex items-center space-x-4 border-l pl-4">
+               
+               <Link href={"/profile"}>
+               
+                      <div className="flex items-center space-x-3">
+                  {user.image ? (
+                    <img
+                      src={user.image}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-green-700"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-700 to-green-600 flex items-center justify-center text-white font-semibold shadow-sm">
+                      {getUserInitials(user.name)}
+                    </div>
+                  )}
+                  <div className="hidden lg:block">
                     <p className="text-sm font-semibold text-gray-900">
                       {user.name}
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-gray-600 truncate max-w-[150px]">
                       {user.email || user.phone_number}
                     </p>
                   </div>
+                </div>
+               </Link>
+
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-all duration-200"
+                  title="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="hidden lg:inline font-medium">Logout</span>
                 </button>
-
-                {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border py-2">
-                    <Link
-                      href="/profile"
-                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition"
-                    >
-                      <User className="w-5 h-5 text-green-800" />
-                      <span className="text-gray-700">My Profile</span>
-                    </Link>
-                    <Link
-                      href="/test"
-                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition"
-                    >
-                      <User className="w-5 h-5 text-green-800" />
-                      <span className="text-gray-700">My Test</span>
-                    </Link>
-
-                    <Link
-                      href="/guideline"
-                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition"
-                    >
-                      <FileSliders className="w-5 h-5 text-green-800" />
-                      <span className="text-gray-700">Guideline Hub</span>
-                    </Link>
-
-                    <Link
-                      href="/exam"
-                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition"
-                    >
-                      <FileSliders className="w-5 h-5 text-green-800" />
-                      <span className="text-gray-700">Exam Hub</span>
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 transition text-left"
-                    >
-                      <LogOut className="w-5 h-5 text-red-600" />
-                      <span className="text-red-600">Logout</span>
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="ml-4 flex items-center space-x-3">
                 <Link
                   href="/login"
-                  className="text-gray-700 hover:text-green-800 transition font-medium"
+                  className="text-gray-700 hover:text-green-700 font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-all"
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-green-800 text-white px-6 py-2 rounded-lg hover:bg-green-900 transition transform hover:scale-105"
+                  className="bg-gradient-to-r from-green-700 to-green-600 text-white px-6 py-2 rounded-lg hover:from-green-800 hover:to-green-700 transition-all transform hover:scale-[1.02] shadow-sm hover:shadow"
                 >
                   Register
                 </Link>
@@ -273,72 +283,164 @@ export default function Navbar() {
           </div>
 
           {/* MOBILE MENU BUTTON */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-gray-700"
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
+          <div className="md:hidden flex items-center space-x-3">
+            {!loading && user && (
+              <div className="flex items-center space-x-2">
+                {user.image ? (
+                  <img
+                    src={user.image}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full object-cover border border-green-700"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-700 to-green-600 flex items-center justify-center text-white text-sm font-semibold">
+                    {getUserInitials(user.name)}
+                  </div>
+                )}
+              </div>
             )}
-          </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-all"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* MOBILE DROPDOWN */}
+        {/* MOBILE MENU */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-3 bg-white border-t">
-            {navLinks.map((link, index) => (
-              <Link
-                key={index}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-700 hover:text-green-800 transition px-4"
-              >
-                {link.name}
-              </Link>
-            ))}
+          <div
+            ref={mobileMenuRef}
+            className="md:hidden absolute top-16 left-0 right-0 bg-white shadow-lg border-t animate-in slide-in-from-top-5 duration-200"
+          >
+            <div className="px-4 py-3 space-y-1">
+              {/* Navigation Links */}
+              {navLinks.map((link, index) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={index}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-3 rounded-lg transition-all"
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="font-medium">{link.name}</span>
+                  </Link>
+                );
+              })}
 
-            {/* MOBILE AUTH */}
-            {loading ? (
-              <div className="px-4 py-2">
-                <div className="w-full h-10 bg-gray-200 rounded-lg animate-pulse"></div>
-              </div>
-            ) : user ? (
-              <>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 transition text-left"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block text-gray-700 hover:text-green-800 transition px-4 py-2"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block bg-green-800 text-white px-6 py-2 rounded-lg mx-4 text-center hover:bg-green-900 transition"
-                >
-                  Register
-                </Link>
-              </>
-            )}
+              {/* User Section */}
+              {!loading && user && (
+                <>
+                  {/* User Info */}
+                  <div className="px-4 py-3 border-t mt-2">
+                    <div className="flex items-center space-x-3">
+                      {user.image ? (
+                        <img
+                          src={user.image}
+                          alt={user.name}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-green-700"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-700 to-green-600 flex items-center justify-center text-white font-semibold text-lg">
+                          {getUserInitials(user.name)}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-900">{user.name}</p>
+                        <p className="text-sm text-gray-600">
+                          {user.email || user.phone_number}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* User Menu Links */}
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-3 rounded-lg transition-all"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>My Profile</span>
+                  </Link>
+                  <Link
+                    href="/test"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-3 rounded-lg transition-all"
+                  >
+                    <FileSliders className="h-5 w-5" />
+                    <span>My Test</span>
+                  </Link>
+                  <Link
+                    href="/video"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-3 rounded-lg transition-all"
+                  >
+                    <PlayCircle className="h-5 w-5" />
+                    <span>My Video</span>
+                  </Link>
+                  <Link
+                    href="/guideline"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-3 rounded-lg transition-all"
+                  >
+                    <FileSliders className="h-5 w-5" />
+                    <span>Guideline Hub</span>
+                  </Link>
+                  <Link
+                    href="/exam"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-3 rounded-lg transition-all"
+                  >
+                    <FileSliders className="h-5 w-5" />
+                    <span>Exam Hub</span>
+                  </Link>
+
+                  {/* Logout Button */}
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center space-x-3 text-red-600 hover:bg-red-50 px-4 py-3 rounded-lg transition-all mt-2"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span className="font-medium">Logout</span>
+                  </button>
+                </>
+              )}
+
+              {/* Auth Buttons for non-logged users */}
+              {!loading && !user && (
+                <div className="border-t pt-3 mt-2 space-y-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-center text-gray-700 hover:text-green-700 hover:bg-green-50 px-4 py-3 rounded-lg font-medium transition-all"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-center bg-gradient-to-r from-green-700 to-green-600 text-white px-4 py-3 rounded-lg hover:from-green-800 hover:to-green-700 transition-all font-medium"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
     </nav>
   );
 }
-
-
-
-

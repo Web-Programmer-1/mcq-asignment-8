@@ -23,7 +23,7 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-// Toggle Component
+
 const Toggle = ({ enabled, onChange }:{ enabled: boolean; onChange: (enabled: boolean) => void;}) => (
   <div
     onClick={() => onChange(!enabled)}
@@ -59,6 +59,7 @@ export default function ModernExamList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  console.log("SearchTerm", searchTerm);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Modal States
@@ -75,8 +76,10 @@ export default function ModernExamList() {
   const fetchExams = async (currentPage: number, search:string) => {
     setLoading(true);
 
+    const base_url = process.env.NEXT_PUBLIC_BASE_URL!;
+
     try {
-      const url = `https://mcq-analysis.vercel.app/api/v1/exam?page=${currentPage}&limit=${limit}&searchTerm=${search}`;
+      const url = `${base_url}/exam?page=${currentPage}&limit=${limit}&searchTerm=${search}`;
       const response = await fetch(url, {
         method: "GET",
         headers: { Authorization: getCookie("access_token") || "" },
@@ -511,3 +514,19 @@ export default function ModernExamList() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

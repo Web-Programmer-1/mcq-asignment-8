@@ -1,8 +1,8 @@
 
 
 "use client";
-import { useState, useEffect } from 'react';
-import { User, Phone, Mail, Calendar, Edit2, Shield, CheckCircle, X, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Phone, Mail, Calendar, Edit2, Shield, CheckCircle, X, Upload, Loader } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -38,12 +38,19 @@ export default function ProfilePage() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<UpdateFormData>({
     name: '',
     phone_number: '',
     image: ''
   });
+
+  // Cloudinary configuration
+  const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
   useEffect(() => {
     fetchProfile();
@@ -59,8 +66,10 @@ export default function ProfilePage() {
         return;
       }
 
+      const base_url = process.env.NEXT_PUBLIC_BASE_URL!;
+
       const response = await fetch(
-        "https://mcq-analysis.vercel.app/api/v1/user/auth",
+        `${base_url}/user/auth`,
         {
           method: "GET",
           headers: {
@@ -79,6 +88,7 @@ export default function ProfilePage() {
           phone_number: data.data.phone_number,
           image: data.data.image || ''
         });
+        setImagePreview(data.data.image || '');
       } else {
         setError("Failed to load profile");
       }
@@ -96,6 +106,65 @@ export default function ProfilePage() {
       [name]: value
     }));
     setUpdateError(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadImageToCloudinary(file);
+    }
+  };
+
+  const uploadImageToCloudinary = async (file: File) => {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+      setUpdateError("Cloudinary configuration missing");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUpdateError("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUpdateError("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploadingImage(true);
+    setUpdateError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.secure_url) {
+        setFormData(prev => ({
+          ...prev,
+          image: data.secure_url
+        }));
+        setImagePreview(data.secure_url);
+      } else {
+        setUpdateError("Failed to upload image");
+      }
+    } catch (err) {
+      setUpdateError("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleUpdateProfile = async () => {
@@ -130,7 +199,7 @@ export default function ProfilePage() {
         setTimeout(() => {
           setIsModalOpen(false);
           setUpdateSuccess(false);
-          fetchProfile(); // Refresh profile data
+          fetchProfile();
         }, 1500);
       } else {
         setUpdateError(data.message || "Failed to update profile");
@@ -149,6 +218,7 @@ export default function ProfilePage() {
         phone_number: profile.phone_number,
         image: profile.image || ''
       });
+      setImagePreview(profile.image || '');
     }
     setIsModalOpen(true);
     setUpdateError(null);
@@ -159,6 +229,7 @@ export default function ProfilePage() {
     setIsModalOpen(false);
     setUpdateError(null);
     setUpdateSuccess(false);
+    setImagePreview('');
   };
 
   const getUserInitials = (name: string) => {
@@ -475,36 +546,62 @@ export default function ProfilePage() {
                 />
               </div>
 
-              {/* Image URL Field */}
+              {/* Profile Image Upload */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Profile Image URL
+                  Profile Image
                 </label>
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <input
-                      type="url"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-800 focus:border-transparent transition outline-none"
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </div>
-                  {formData.image && (
-                    <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-gray-200">
+                
+                {/* Image Preview */}
+                <div className="mb-4">
+                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-gray-200 bg-gray-100">
+                    {imagePreview ? (
                       <img
-                        src={formData.image}
+                        src={imagePreview}
                         alt="Preview"
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full h-full bg-green-800 flex items-center justify-center text-white text-3xl font-bold">
+                        {profile && getUserInitials(profile.name)}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-gray-500">Enter a direct image URL</p>
+
+                {/* Upload Button */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-800 hover:bg-green-50 transition flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingImage ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin text-green-800" />
+                      <span className="text-gray-700 font-medium">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 text-green-800" />
+                      <span className="text-gray-700 font-medium">
+                        {imagePreview ? 'Change Image' : 'Upload Image'}
+                      </span>
+                    </>
+                  )}
+                </button>
+                
+                <p className="mt-2 text-sm text-gray-500 text-center">
+                  JPG, PNG or GIF (Max 5MB)
+                </p>
               </div>
             </div>
 
@@ -512,14 +609,14 @@ export default function ProfilePage() {
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
               <button
                 onClick={closeModal}
-                disabled={updateLoading}
+                disabled={updateLoading || uploadingImage}
                 className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateProfile}
-                disabled={updateLoading}
+                disabled={updateLoading || uploadingImage}
                 className="px-6 py-3 bg-green-800 text-white rounded-lg font-semibold hover:bg-green-900 transition disabled:opacity-50 flex items-center gap-2"
               >
                 {updateLoading ? (
@@ -544,3 +641,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
+
