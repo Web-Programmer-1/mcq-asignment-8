@@ -40,46 +40,23 @@ For Students
 --------------
 Register/Login to your account
 Access study materials
-
 Take MCQ exams
-
 Attempt written exams
-
 Use Matheditor for math expressions
 
 For Administrators
+-----------------
 Login with admin credentials
-
 Manage exam questions
-
 Upload study materials
-
 Monitor user performance
-
 Deployment
 Frontend (Vercel)
 Push code to GitHub
 
-Import project in Vercel
-
-Configure environment variables
-
-Deploy
-
-Backend
-Build: npm run build
-
-Deploy to hosting service
-
-Set up PM2 for process management
-
-Configure environment variables
 
 Support
-For support, email: support@mcqanalysisbd.com
+For support, email: mdhakimshorkar123@gmail.com
 
 
 
-AWS account for S3 storage
-
-Installation
