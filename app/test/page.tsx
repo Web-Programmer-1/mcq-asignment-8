@@ -7,7 +7,7 @@ export default function TestHomePage() {
         href="/test/123"
         className="bg-blue-600 text-white px-4 py-2 rounded inline-block mt-4"
       >
-        Start Test 
+        Start Test ....
       </a>
     </div>
   );
